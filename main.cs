@@ -18,16 +18,29 @@ class Node
   public int getSize() {return size;}
 }
 
+// Need to create a parent children class
+class NodeChildrenPair
+{
+  private string node;
+  private List<Node> children;
+
+  public NodeChildrenPair(string n, List<Node> l) {
+    node = n;
+    children = l;
+  }
+  public string getNode() {return node;}
+  public List<Node> getChildren() {return children;}
+}
 
 class Program {
   // Calculate the subtree associated with the parent
-  public static int CalculateSize(List<Node> nodes, string parent) {
+  public static int CalculateSize(List<Node> nodes, IDictionary<string, int> nodeSizes, string parent) {
     int dirSize = 0;
     foreach(Node node in nodes) {
       if (node.getParent() == parent) {
         int size = node.getSize();
         if (size == -1) {
-          dirSize += CalculateSize(nodes, node.getNode()); 
+          //dirSize += CalculateSize(nodes, node.getNode()); 
         } else {
           dirSize += size;
         }
@@ -42,23 +55,75 @@ class Program {
 
   // Calculate the entire directory
   public static void CalculateAllSizes(List<Node> nodes) {
-    foreach(Node node in nodes) {
-      Console.WriteLine("Node: {0} Parent:{1} Size:{2}", node.getNode(), node.getParent(), node.getSize());
+
+    
+    List<NodeChildrenPair> parentChildren = calculateParentChildLists(nodes);
+    IDictionary<string, int> nodeSizes = new Dictionary<string, int>();
+    foreach(NodeChildrenPair node in parentChildren) {
+      nodeSizes.Add(node.getNode(), node.getChildren().Count);
     }
+
+    foreach(KeyValuePair<string, int> pair in nodeSizes)
+    {
+      Console.WriteLine("{0}:{1}", pair.Key, pair.Value);
+    }
+
+    //foreach(NodeChildrenPair node in parentChildren) {
+    //  if (size == -1) {
+    //      nodeSizes[node.getNode()] = CalculateSize(nodes, node.getNode()); 
+    //    }
+    //  }
+    //}
+  
+
+    //
+    //int totalSizeUnder100k = 0;
+    //foreach(NodeChildrenPair node in parentChildren) {
+    //  Console.WriteLine("{0}: has {1} children", node.getNode(), node.getChildren().Count);
+      // Calculate the size of each parent
+    //  int size = CalculateSize(nodes, node.getNode());
+      //Console.WriteLine("Parent: {0}", parent);
+    //  totalSizeUnder100k += size;
+    //}
+    //Console.WriteLine("Total under 100k: {0}", totalSizeUnder100k);
+  }
+
+  public static List<NodeChildrenPair> calculateParentChildLists(List<Node> nodes) {
     // Find all unique parents
     HashSet<string> uniqueParents = new HashSet<string>();
     foreach (Node node in nodes) {
       uniqueParents.Add(node.getParent());
     }
-    int totalSizeUnder100k = 0;
+    List<NodeChildrenPair> parentAndChildrenUnsorted = new List<NodeChildrenPair>();
+    int biggestNumChildren = 0;
     foreach(string parent in uniqueParents) {
-      // Calculate the size of each parent
-      //int size = CalculateSize(nodes, parent);
-      Console.WriteLine("Parent: {0}", parent);
-      //totalSizeUnder100k += size;
+      List<Node> children = new List<Node>();
+      foreach(Node node in nodes) {
+        if (node.getParent() == parent){
+          children.Add(node);
+        }
+      }
+      if (children.Count > 0) {
+        if (children.Count>biggestNumChildren) {biggestNumChildren=children.Count;}
+        NodeChildrenPair newPair = new NodeChildrenPair(parent, children);
+        parentAndChildrenUnsorted.Add(newPair);
+      }
     }
-    Console.WriteLine("Total under 100k: {0}", totalSizeUnder100k);
+
+    // Sort parent and children, shortest num of children first
+    List<NodeChildrenPair> parentAndChildrenSorted = new List<NodeChildrenPair>();
+    for(int i=0; i<=biggestNumChildren; i++) {
+      foreach(NodeChildrenPair pair in parentAndChildrenUnsorted) {
+        if (pair.getChildren().Count == i) {
+          parentAndChildrenSorted.Add(pair);
+        }
+      }
+    }
+    return parentAndChildrenSorted;
   }
+
+
+
   
   public static void Main (string[] args) {
     string[] lines = System.IO.File.ReadAllLines(@"input.txt");
