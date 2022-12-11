@@ -1,204 +1,152 @@
 using System;
 using System.Collections.Generic;
 
-class Directory
-{
-  public List<Node> nodes; // Modifiable
-  public List<NodeChildrenPair> parentChildren; // Modifiable
-
-  public Directory(List<NodeChildrenPair> pc) {
-    //nodes = n;
-    parentChildren = pc;
-  }
-  // Calculate the subtree associated with the parent
-  public int CalculateSizeRecursive(NodeChildrenPair node) {
-    //if (node.getChildren().Count == 0)
-        return 0;}
+public class Directory {
+  IDictionary<string, List<string>> directoriesAndChildren = new Dictionary<string, List<string>>();
+  List<string> directories;
+  IDictionary<string, int> directorySizes = new Dictionary<string, int>();
   
-  public int CalculateSize() {
-    int totalSizeUnder100k = 0;
-    foreach(NodeChildrenPair node in parentChildren) {
-      //Console.WriteLine("{0}: has {1} children", node.getNode(), node.getChildren().Count);
-      // Calculate the size of each parent
-      int size =  CalculateSizeRecursive(node.getNode());
-      //Console.WriteLine("Parent: {0}", parent);
-      totalSizeUnder100k += size;
-    }
-    Console.WriteLine("Total under 100k: {0}", totalSizeUnder100k);
-    return 0;
-  }
+  public Directory(string[] commands) {
+    List<string> currentDirectory = new List<string>();
+    directories = new List<string>();
 
-  
-}
-
-class TreeNode {
-  private string name;
-  private int size;
-  private List<TreeNode> childList;
-
-  public TreeNode(string n, int s, List<TreeNode> c) {
-    name = n;
-    size = s;
-    childList = c;
-  }
-}
-class Node
-{
-  private string node;
-  private string parent;
-  private int size;
-  
-  public Node(string n, string p, int si) {
-    node = n;
-    parent = p;
-    size = si;
-  }      
-  public string getNode() {return node;}
-  public string getParent() {return parent;}
-  public int getSize() {return size;}
-}
-
-// Need to create a parent children class
-class NodeChildrenPair
-{
-  private Node node;
-  private List<Node> children;
-
-  public NodeChildrenPair(Node n, List<Node> l) {
-    node = n;
-    children = l;
-  }
-  public string getNode() {return node.getNode();}
-  public List<Node> getChildren() {return children;}
-}
-
-class Program {
-
-
-  /*public static List<NodeChildrenPair> calculateParentChildLists() {
-    // Find all unique parents
-    HashSet<string> uniqueParents = new HashSet<string>();
-    foreach (Node node in NODES) {
-      uniqueParents.Add(node.getParent());
-    }
-    List<NodeChildrenPair> parentAndChildrenUnsorted = new List<NodeChildrenPair>();
-    int biggestNumChildren = 0;
-    foreach(string parent in uniqueParents) {
-      List<Node> children = new List<Node>();
-      foreach(Node node in NODES) {
-        if (node.getParent() == parent){
-          children.Add(node);
-        }
-      }
-      if (children.Count > 0) {
-        if (children.Count>biggestNumChildren) {biggestNumChildren=children.Count;}
-        NodeChildrenPair newPair = new NodeChildrenPair(parent, children);
-        parentAndChildrenUnsorted.Add(newPair);
-      }
-    }
-
-    // Sort parent and children, shortest num of children first
-    List<NodeChildrenPair> parentAndChildrenSorted = new List<NodeChildrenPair>();
-    for(int i=0; i<=biggestNumChildren; i++) {
-      foreach(NodeChildrenPair pair in parentAndChildrenUnsorted) {
-        if (pair.getChildren().Count == i) {
-          parentAndChildrenSorted.Add(pair);
-        }
-      }
-    }
-    return parentAndChildrenSorted;
-  }*/
-
-
-
-  // Calculate the size of a directory defined by a list of nodes. 
-  public static void CalculateAllSizes(List<NodeChildrenPair> parentsAndChildren) {
-
-    // Create a directory
-    Directory dir = new Directory(parentsAndChildren);
-    //int under100k = dir.CalculateSize();
-  }
-
-
-  public static void DisplayParentChildPairs(List<NodeChildrenPair> parentChildPairs) {
-    foreach (NodeChildrenPair pair in parentChildPairs) {
-      Console.WriteLine("Parent: {0}", pair.getNode().getNode());
-      foreach (Node node in pair.getChildren()) {
-        Console.WriteLine("\t{0}", node.getNode());
-      }
-    }
-  }
-
-  
-  // Calculates a list of NodeChildrenPair from a list of Nodes
-  public static List<NodeChildrenPair> calculateParentChildLists(List<Node> nodes) {
-    // Find all unique parents
-    HashSet<string> uniqueParents = new HashSet<string>();
-    foreach (Node node in nodes) {
-      uniqueParents.Add(node.getParent());
-    }
+    //directorySizes.Add("root", -1);
     
-    List<NodeChildrenPair> parentAndChildren = new List<NodeChildrenPair>();
-    // For each parent
-    foreach(string parent in uniqueParents) {
-      List<Node> children = new List<Node>();
-      foreach(Node node in nodes) {
-        if (node.getParent() == parent){
-          children.Add(node);
-        }
-      }
-      NodeChildrenPair newPair = new NodeChildrenPair(parent, children);
-      parentAndChildren.Add(newPair);
-    }
-    return parentAndChildren;
-  }
-
-  
-  
-  public static void Main (string[] args) {
-    string[] lines = System.IO.File.ReadAllLines(@"input.txt");
-
-    List<Node> nodes = new List<Node>();
-    Node newNode = new Node("/", "Root", -1);
-    string currentParent = "";
-    foreach(string line in lines) {
-      
+    foreach(string line in commands) {
       // Commands
       if (line[0] == '$') {
         // cd
         if (line[2] == 'c') {
           if (line[5] == '.'){
-            // ..
-            // return to parent
+            // cd ..
+            // Backtrack to higher up
+            currentDirectory.RemoveAt(currentDirectory.Count - 1);
           } else {
             // cd b 
             // change directory
-            string dir = line.Substring(5, line.Length-5);
-            currentParent = dir;
+            // Add directory to list. Descend.
+            currentDirectory.Add(line.Substring(5, line.Length-5));
           } 
         }
-      } else if (line[0] == 'd') {
-        // dir d 
-        // make a directory
-        string name = line.Substring(4, line.Length-4);
-        newNode = new Node(name, currentParent, -1);
-        nodes.Add(newNode);
       } else {
-        // make a file
-        int spaceIndex = line.IndexOf(' ');
-        string sizeStr = line.Substring(0, spaceIndex);
-        int size = Convert.ToInt32(sizeStr);
-        string name = line.Substring(spaceIndex+1, line.Length-1-spaceIndex);
-        newNode = new Node(name, currentParent, size);
-        nodes.Add(newNode);
+        string name = "";
+        int size = -1;
+        if (line[0] == 'd') {  
+          //   dir d 
+          // make a directory
+          name = line.Substring(4, line.Length-4);
+        } else {
+          // make a file
+          int spaceIndex = line.IndexOf(' ');
+          string sizeStr = line.Substring(0, spaceIndex);
+          size = Convert.ToInt32(sizeStr);
+          name = line.Substring(spaceIndex+1, line.Length-1-spaceIndex);
+        }
+        string fullName = "";
+        foreach(string directory in currentDirectory) {
+          fullName = fullName + directory + "/";
+        }
+        fullName = fullName + name;
+        directorySizes.Add(fullName, size);
+        
+        
       }
     } // end foreach
-
-    // Parsed all commands. Have a list of Nodes
+    Console.WriteLine();
+    foreach(KeyValuePair<string, int> pair in directorySizes) {
+      Console.WriteLine("{0}:{1}", pair.Key, pair.Value);
+    }
     
-    List<NodeChildrenPair> parentChildPairs = calculateParentChildLists(nodes);
+  }
 
-    DisplayParentChildPairs(parentChildPairs);
-    //CalculateAllSizes(parentChildPairs);
+  public static int CountDepth(string dir)
+    {
+        int count = -2;
+        for (int i = 0; i < dir.Length; i++)
+        {
+            if (dir[i] == '/') ++count;
+        }
+        return count;
+    }
+  
+  public void CalculateChildren() {
+    foreach(KeyValuePair<string, int> current in directorySizes) {
+      List<string> newChildrenList = new List<string>();
+      directoriesAndChildren.Add(current.Key, newChildrenList);
+
+      foreach(KeyValuePair<string, int> child in directorySizes) {
+        // Only get immediate children
+        var dirDepth = CountDepth(current.Key);
+        var childDepth = CountDepth(child.Key);
+        //Console.WriteLine("P: {0}({1}) \tC: {2}({3})", current.Key, dirDepth, child.Key, childDepth);
+        if (child.Key.Contains(current.Key) && 
+            (child.Key.Length > current.Key.Length) && 
+            (childDepth == (dirDepth + 1))) {
+          // Child is a subdirectory
+          // Child is not itself
+          directoriesAndChildren[current.Key].Add(child.Key);
+        }
+      } 
+      //Console.WriteLine("{0}:{1}", pair.Key, pair.Value);
+    }
+
+    Console.WriteLine("\nHierarchy");
+    foreach(KeyValuePair<string, List<string>> pair in directoriesAndChildren) {
+      Console.WriteLine(pair.Key);
+      foreach(string s in pair.Value) {
+        Console.WriteLine("\t{0}", s);
+      }
+    }
+    Console.WriteLine("End of hierarchy");
+  }
+
+
+  public int CalculateSize(string dir) {
+    Console.WriteLine("Calculating the size of {0}, it's currently {1}", dir, directorySizes[dir]);
+    if (directorySizes[dir] > -1) {
+      return directorySizes[dir];
+    } else {
+      int size = 0;
+      Console.WriteLine("\tCalculating children of {0}", dir);
+      foreach(string child in directoriesAndChildren[dir]) {
+        int newSize = CalculateSize(child);
+        Console.WriteLine("\t\tAdding {0} \t{1} to {2}", child, directorySizes[child], dir);
+        size += newSize;
+      }
+      directorySizes[dir] = size;
+      Console.WriteLine("\tTotal size of {0} is {1}", dir,size);
+      return size;
+    }
+  }
+
+  public void CalculateAllSizes () {
+    foreach(KeyValuePair<string, int> dir in directorySizes) {
+      directorySizes[dir.Key] = CalculateSize(dir.Key);
+    }
+    Console.WriteLine();
+    int directoriesAtMost100k = 0; 
+    foreach(KeyValuePair<string, int> dir in directorySizes) {
+      if (directoriesAndChildren[dir.Key].Count > 0) {
+        // It has children
+        // It's a directory
+        if (dir.Value <= 100000) {
+          // small enough
+          Console.WriteLine("{0} has {1} children, adding {2}", dir.Key, directoriesAndChildren[dir.Key].Count, dir.Value);
+          directoriesAtMost100k += dir.Value;
+        }
+      }
+      Console.WriteLine("{0}:{1}", dir.Key, dir.Value);
+    }
+    Console.WriteLine(directoriesAtMost100k);
+  }
+}
+
+class Program {
+
+  public static void Main (string[] args) {
+    string[] commands = System.IO.File.ReadAllLines(@"input.txt");
+    Directory dir = new Directory(commands);
+    dir.CalculateChildren();
+    dir.CalculateAllSizes();
   }
 }
